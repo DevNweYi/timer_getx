@@ -32,7 +32,19 @@ class _TimerPageState extends State<TimerPage> {
   _countSecond() async {
     for (int i = 59; i >= 0; i--) {
       await Future.delayed(const Duration(seconds: 1));
-      _streamController.sink.add(i.toString());
+      String value = '';
+      if (i.toString().length == 1) {
+        value = '0$i';
+      } else {
+        value = i.toString();
+      }
+      _streamController.sink.add(value);
+      if (i == 0) {
+        setState(() {
+           _minute = '01';
+          _currentButtonState = ButtonState.complete;
+        });
+      }
     }
   }
 
@@ -72,11 +84,11 @@ class _TimerPageState extends State<TimerPage> {
                   FloatingActionButton(
                       child: const Icon(Icons.play_arrow),
                       onPressed: () {
-                        //_play();
+                        _play();
                         _countSecond();
-                        /* setState(() {
+                        setState(() {
                           _currentButtonState = ButtonState.runInProgress;
-                        }); */
+                        });
                       }),
                 ] else if (_currentButtonState ==
                     ButtonState.runInProgress) ...[
