@@ -13,13 +13,18 @@ enum ButtonState { initial, runInProgress, pause, complete }
 
 class _TimerPageState extends State<TimerPage> {
   dynamic _currentButtonState;
-  String _minute = '01', _second = '00';
   StreamController<String> _streamController = StreamController();
+  final int _duration = 60;
+  int _durationSec = 0;
+  late String _minutesStr, _secondsStr;
+  bool _canComplete = true;
 
   @override
   void initState() {
     _currentButtonState = ButtonState.initial;
-    _streamController.add(_second);
+    _minutesStr = ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
+    _secondsStr = (_duration % 60).floor().toString().padLeft(2, '0');
+    _streamController.add(_secondsStr);
     super.initState();
   }
 
@@ -29,29 +34,21 @@ class _TimerPageState extends State<TimerPage> {
     super.dispose();
   }
 
-  _countSecond() async {
-    for (int i = 59; i >= 0; i--) {
-      await Future.delayed(const Duration(seconds: 1));
-      String value = '';
-      if (i.toString().length == 1) {
-        value = '0$i';
-      } else {
-        value = i.toString();
+  _countSecond(int startNum) async {
+    for (int i = startNum; i >= 0; i--) {
+      await Future.delayed(Duration(seconds: _durationSec));
+      if (!_streamController.isClosed) {
+        _streamController.sink.add(i.toString().padLeft(2, '0'));
+        _secondsStr = i.toString();
       }
-      _streamController.sink.add(value);
-      if (i == 0) {
-        setState(() {
-           _minute = '01';
-          _currentButtonState = ButtonState.complete;
-        });
+      if (_canComplete) {
+        if (i == 0) {
+          setState(() {
+            _currentButtonState = ButtonState.complete;
+          });
+        }
       }
     }
-  }
-
-  _play() {
-    setState(() {
-      _minute = '00';
-    });
   }
 
   @override
@@ -70,7 +67,7 @@ class _TimerPageState extends State<TimerPage> {
                 stream: _streamController.stream,
                 builder: (context, snapshot) {
                   return Text(
-                    "$_minute:${snapshot.data}",
+                    "$_minutesStr:${snapshot.data}",
                     style: Theme.of(context).textTheme.displayLarge,
                   );
                 }),
@@ -84,42 +81,30 @@ class _TimerPageState extends State<TimerPage> {
                   FloatingActionButton(
                       child: const Icon(Icons.play_arrow),
                       onPressed: () {
-                        _play();
-                        _countSecond();
-                        setState(() {
-                          _currentButtonState = ButtonState.runInProgress;
-                        });
+                        _timerPlay();
                       }),
                 ] else if (_currentButtonState ==
                     ButtonState.runInProgress) ...[
                   FloatingActionButton(
                       child: const Icon(Icons.pause),
                       onPressed: () {
-                        setState(() {
-                          _currentButtonState = ButtonState.pause;
-                        });
+                        _timerPause();
                       }),
                   FloatingActionButton(
-                      child: const Icon(Icons.replay),
+                      child: const Icon(Icons.restore),
                       onPressed: () {
-                        setState(() {
-                          _currentButtonState = ButtonState.initial;
-                        });
+                        _timerReset();
                       }),
                 ] else if (_currentButtonState == ButtonState.pause) ...[
                   FloatingActionButton(
                       child: const Icon(Icons.play_arrow),
                       onPressed: () {
-                        setState(() {
-                          _currentButtonState = ButtonState.runInProgress;
-                        });
+                        _timerReplay();
                       }),
                   FloatingActionButton(
-                      child: const Icon(Icons.replay),
+                      child: const Icon(Icons.restore),
                       onPressed: () {
-                        setState(() {
-                          _currentButtonState = ButtonState.initial;
-                        });
+                        _timerReset();
                       }),
                 ] else if (_currentButtonState == ButtonState.complete) ...[
                   FloatingActionButton(
@@ -136,5 +121,45 @@ class _TimerPageState extends State<TimerPage> {
         ),
       ),
     );
+  }
+
+  _timerPlay() {
+    _durationSec = 1;
+    _countSecond(59);
+    setState(() {
+      _minutesStr = '00';
+      _currentButtonState = ButtonState.runInProgress;
+    });
+  }
+
+  _timerPause() {
+    _canComplete = false;
+    _durationSec = 0;
+    _streamController.close();
+    setState(() {
+      _currentButtonState = ButtonState.pause;
+    });
+  }
+
+  _timerReplay() {
+    _canComplete = true;
+    _durationSec = 1;
+    _streamController = StreamController();
+    _countSecond(int.parse(_secondsStr) - 1);
+    setState(() {
+      _currentButtonState = ButtonState.runInProgress;
+    });
+  }
+
+  _timerReset() {
+    _canComplete = false;
+    _durationSec = 0;
+    _streamController.close();
+   /*  _streamController = StreamController();
+    _streamController.add('00'); */
+    setState(() {
+      _minutesStr = ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
+      _currentButtonState = ButtonState.initial;
+    });
   }
 }
