@@ -17,7 +17,7 @@ class _TimerPageState extends State<TimerPage> {
   final int _duration = 60;
   int _durationSec = 0;
   late String _minutesStr, _secondsStr;
-  bool _canComplete = true;
+  bool _canComplete = true, _isReset = false;
 
   @override
   void initState() {
@@ -44,10 +44,22 @@ class _TimerPageState extends State<TimerPage> {
       if (_canComplete) {
         if (i == 0) {
           setState(() {
+            _minutesStr =
+                ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
             _currentButtonState = ButtonState.complete;
           });
         }
       }
+    }
+    if (_isReset) {
+      _isReset = false;
+      _streamController = StreamController();
+      setState(() {
+        _streamController.sink.add('00');
+        _minutesStr =
+            ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
+        _currentButtonState = ButtonState.initial;
+      });
     }
   }
 
@@ -93,7 +105,7 @@ class _TimerPageState extends State<TimerPage> {
                   FloatingActionButton(
                       child: const Icon(Icons.restore),
                       onPressed: () {
-                        _timerReset();
+                        _timerResetInPlaying();
                       }),
                 ] else if (_currentButtonState == ButtonState.pause) ...[
                   FloatingActionButton(
@@ -104,7 +116,7 @@ class _TimerPageState extends State<TimerPage> {
                   FloatingActionButton(
                       child: const Icon(Icons.restore),
                       onPressed: () {
-                        _timerReset();
+                        _timerResetInPause();
                       }),
                 ] else if (_currentButtonState == ButtonState.complete) ...[
                   FloatingActionButton(
@@ -124,6 +136,7 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   _timerPlay() {
+    _canComplete = true;
     _durationSec = 1;
     _countSecond(59);
     setState(() {
@@ -151,15 +164,21 @@ class _TimerPageState extends State<TimerPage> {
     });
   }
 
-  _timerReset() {
+  _timerResetInPlaying() {
+    _isReset = true;
     _canComplete = false;
     _durationSec = 0;
     _streamController.close();
-   /*  _streamController = StreamController();
-    _streamController.add('00'); */
+  }
+
+   _timerResetInPause() {
+    _canComplete = false;
+     _streamController = StreamController();
     setState(() {
-      _minutesStr = ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
-      _currentButtonState = ButtonState.initial;
-    });
+        _streamController.sink.add('00');
+        _minutesStr =
+            ((_duration / 60) % 60).floor().toString().padLeft(2, '0');
+        _currentButtonState = ButtonState.initial;
+      });
   }
 }
