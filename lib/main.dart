@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:timer_getx/ui/timer_page.dart';
 
+import 'ui/timer_page2.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         useMaterial3: true,
       ),
-      home: const TimerPage(),
+      home: const TimerPage2(),
     );
   }
 }
