@@ -37,9 +37,13 @@ class _TimerPage2State extends State<TimerPage2> {
             StreamBuilder(
                 stream: _streamController.stream,
                 builder: (context, snapshot) {
-                  dynamic _secondsStr;
+                  dynamic minutesStr, secondsStr;
                   if (snapshot.hasData) {
-                    _secondsStr = (snapshot.data! % 60)
+                    minutesStr = ((snapshot.data! / 60) % 60)
+                        .floor()
+                        .toString()
+                        .padLeft(2, '0');
+                    secondsStr = (snapshot.data! % 60)
                         .floor()
                         .toString()
                         .padLeft(2, '0');
@@ -47,31 +51,17 @@ class _TimerPage2State extends State<TimerPage2> {
                       _timer.cancel();
                     }
                   } else {
-                    _secondsStr =
+                    minutesStr = ((_durationSec / 60) % 60)
+                        .floor()
+                        .toString()
+                        .padLeft(2, '0');
+                    secondsStr =
                         (_durationSec % 60).floor().toString().padLeft(2, '0');
                   }
                   return Text(
-                    _secondsStr,
+                    minutesStr + ":" + secondsStr,
                     style: Theme.of(context).textTheme.displayLarge,
                   );
-                  /*  if (snapshot.hasData) {
-                    var secondsStr = (snapshot.data! % 60)
-                        .floor()
-                        .toString()
-                        .padLeft(2, '0');
-                    if (snapshot.data == 0) {
-                      _timer.cancel();
-                    }
-                    return Text(
-                      secondsStr,
-                      style: Theme.of(context).textTheme.displayLarge,
-                    );
-                  } else {
-                    return Text(
-                      _durationSec.toString(),
-                      style: Theme.of(context).textTheme.displayLarge,
-                    );
-                  } */
                 }),
             const Padding(padding: EdgeInsets.all(30.0)),
             Row(

@@ -1,0 +1,1 @@
+enum ButtonState { initial, runInProgress, pause, complete }
